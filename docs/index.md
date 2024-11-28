@@ -74,7 +74,7 @@ The explanation and valid values for each parameter are provided below.
 | Parameter Name | Type   | Description                                                                                                                                                                                                                                            | Valid Values                                                                                                                       |
 | -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `tripType`     | string | The type of trip the user wants to search for. Can be either "oneway" or "roundtrip".                                                                                                                                                                  | `oneway`, `roundtrip`                                                                                                              |
-| `cabin`        | string | The cabin class the user wants to search for.                                                                                                                                                                                                          | `Economy`, `Premium Economy`, `Business`, `First`, `Main Economy`                                                                  |
+| `cabin`        | string | The cabin class the user wants to search for.                                                                                                                                                                                                          | `Economy`, `Premium Economy`, `Business`, `First`                                                                                  |
 | `programs`     | array  | The airline programs the user wants to search for.                                                                                                                                                                                                     | `AM`, `AC`, `KL`, `AS`, `AA`, `AV`, `BA`, `CM`, `DL`, `EK`, `EY`, `IB`, `B6`, `QF`, `SK`, `SQ`, `NK`, `TP`, `TK`, `UA`, `VS`, `VA` |
 | `stops`        | array  | The stops the user wants to search for. For "oneway" this will be just a single valued array. For "roundtrip" this would contain two stop objects. The origin and destination fields would be interchanged for the second stop object for "roundtrip". | `StopObject`, details below                                                                                                        |
 
@@ -88,10 +88,10 @@ The explanation and valid values for each parameter are provided below.
 
 **Date Object**
 
-| Parameter Name | Type   | Description                                      | Valid Values                                                                                                                                                                                              |
-| -------------- | ------ | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `value`        | string | The date the user wants to search for.           | A date string in the format `YYYY-MM-DD`.                                                                                                                                                                 |
-| `range`        | number | The range of dates the user wants to search for. | A number representing the number of days before and after the `value` date. For example, for value =`2024-04-12` and range = 3, the search will be for flights departing on `2024-04-09` to `2024-04-15`. |
+| Parameter Name | Type   | Description                                      | Valid Values                                                                                                                                                                                                                                                                  |
+| -------------- | ------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`        | string | The date the user wants to search for.           | A date string in the format `YYYY-MM-DD`.                                                                                                                                                                                                                                     |
+| `range`        | number | The range of dates the user wants to search for. | A number representing the number of days before and after the `value` date. For example, for value =`2024-04-12` and range = 3, the search will be for flights departing on `2024-04-09`, `2024-04-10`, `2024-04-11`, `2024-04-12`, `2024-04-13`, `2024-04-14`, `2024-04-15`. |
 
 ### Examples
 
@@ -106,16 +106,12 @@ The user wants to search for only one-way flights.
   "tripType": "oneway",
   "cabin": "Business",
   "programs": ["AC", "KL", "AS", "AA"],
-  "stops": [
-    {
-      "origin": ["JFK", "LAX"],
-      "destination": ["LON", "PAR"],
-      "date": {
-        "value": "2024-12-15",
-        "range": 0
-      }
-    }
-  ]
+  "origin": ["LON", "PAR"],
+  "destination": ["JFK", "LAX"],
+  "departureDate": {
+    "value": "2024-12-15",
+    "range": 0
+  },
 }
 ```
 
@@ -129,25 +125,17 @@ The user wants to search for round-trip flights.
 {
   "tripType": "roundtrip",
   "cabin": "Business",
-  "programs": ["AC", "KL", "AS", "AA"],
-  "stops": [
-    {
-      "origin": ["JFK", "LAX"],
-      "destination": ["LON", "PAR"],
-      "date": {
-        "value": "2024-12-15",
-        "range": 0
-      }
-    },
-    {
-      "origin": ["LON", "PAR"],
-      "destination": ["JFK", "LAX"],
-      "date": {
-        "value": "2024-12-15",
-        "range": 0
-      }
-    }
-  ]
+  "programs": ["AC", "KL", "AS", "AA"...],
+  "origin": ["LON", "PAR"],
+  "destination": ["JFK", "LAX"],
+  "departureDate": {
+    "value": "2024-12-15",
+    "range": 0
+  },
+  "arrivalDate": {
+    "value": "2024-12-15",
+    "range": 0
+  },
 }
 ```
 
@@ -168,9 +156,7 @@ From the `flights` event, the following data is returned.
 ```typescript
 type Flight = {
   id: string;
-  date: string; // YYYY-MM-DD
-  odKey: string;
-  retail: number; // Retail price of the flight in USD
+  date: string;
   surcharge: number;
   distance: number;
   cabin_type: string;
@@ -180,10 +166,8 @@ type Flight = {
   percent_premium: number;
   award_points: number;
   travel_minutes_total: number;
-  products: FlightProduct[]; // Use the `FlightProduct` type defined earlier
+  products: FlightProduct[]; // Defined below
   stops: number;
-  search_origin: string;
-  search_destination: string;
   origin: string;
   origin_city: string;
   destination: string;
@@ -196,15 +180,6 @@ type Flight = {
     overnight: boolean;
   };
   url: string | null;
-  program_list:
-    | {
-        program_code: string;
-        award_points: number;
-        cost: number;
-        surcharge: number;
-        url: string;
-      }[]
-    | null;
 };
 
 type FlightProduct = {
