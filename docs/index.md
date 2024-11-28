@@ -34,7 +34,7 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
       - [2- Round-trip search](#2--round-trip-search)
   - [Output type](#output-type)
     - [`flights` event](#flights-event)
-    - [`prices` event (experimental/buggy)](#prices-event-experimentalbuggy)
+    - [`prices` event (experimental)](#prices-event-experimental)
 
 ## Host and Route
 
@@ -71,20 +71,15 @@ The API can be operated in two modes:
 
 The explanation and valid values for each parameter are provided below.
 
-| Parameter Name | Type   | Description                                                                                                                                                                                                                                            | Valid Values                                                                                                                       |
-| -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `tripType`     | string | The type of trip the user wants to search for. Can be either "oneway" or "roundtrip".                                                                                                                                                                  | `oneway`, `roundtrip`                                                                                                              |
-| `cabin`        | string | The cabin class the user wants to search for.                                                                                                                                                                                                          | `Economy`, `Premium Economy`, `Business`, `First`                                                                                  |
-| `programs`     | array  | The airline programs the user wants to search for.                                                                                                                                                                                                     | `AM`, `AC`, `KL`, `AS`, `AA`, `AV`, `BA`, `CM`, `DL`, `EK`, `EY`, `IB`, `B6`, `QF`, `SK`, `SQ`, `NK`, `TP`, `TK`, `UA`, `VS`, `VA` |
-| `stops`        | array  | The stops the user wants to search for. For "oneway" this will be just a single valued array. For "roundtrip" this would contain two stop objects. The origin and destination fields would be interchanged for the second stop object for "roundtrip". | `StopObject`, details below                                                                                                        |
-
-**Stop Object**
-
-| Parameter Name | Type   | Description                                        | Valid Values                                   |
-| -------------- | ------ | -------------------------------------------------- | ---------------------------------------------- |
-| `origin`       | array  | The origin city the user wants to search for.      | A list of (IATA codes for) origin cities.      |
-| `destination`  | array  | The destination city the user wants to search for. | A list of (IATA codes for) destination cities. |
-| `date`         | object | The date the user wants to search for.             | `DateObject`, details below                    |
+| Parameter Name                                | Type   | Description                                                                           | Valid Values                                                                                                                       |
+| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `tripType`                                    | string | The type of trip the user wants to search for. Can be either "oneway" or "roundtrip". | `oneway`, `roundtrip`                                                                                                              |
+| `cabin`                                       | string | The cabin class the user wants to search for.                                         | `Economy`, `Premium Economy`, `Business`, `First`                                                                                  |
+| `programs`                                    | array  | The airline programs the user wants to search for.                                    | `AM`, `AC`, `KL`, `AS`, `AA`, `AV`, `BA`, `CM`, `DL`, `EK`, `EY`, `IB`, `B6`, `QF`, `SK`, `SQ`, `NK`, `TP`, `TK`, `UA`, `VS`, `VA` |
+| `origin`                                      | array  | The origin city the user wants to search for.                                         | A list of (IATA codes for) origin cities.                                                                                          |
+| `destination`                                 | array  | The destination city the user wants to search for.                                    | A list of (IATA codes for) destination cities.                                                                                     |
+| `departureDate`                               | object | The departure date the user wants to search for.                                      | `DateObject`, details below                                                                                                        |
+| `arrivalDate` (required only for `roundtrip`) | object | The arrival date the user wants to search for.                                        | `DateObject`, details below                                                                                                        |
 
 **Date Object**
 
@@ -146,12 +141,100 @@ The user wants to search for round-trip flights.
 From the `flights` event, the following data is returned.
 
 ```typescript
+// Payload from the `flights` event
 {
   "flights": Flight[]
 }
 ```
 
-**`Flight Object`**
+**Sample Flight Object (Single)**
+
+```json
+{
+  "id": "20250301_RMO_LHR_BUSINESS&ECONOMY_TK270-TK1593-LH918",
+  "date": "2025-03-01",
+  "surcharge": 56.5,
+  "distance": 0,
+  "cabin_type": "Business & Economy",
+  "airline_name": "Turkish Airlines & Lufthansa",
+  "program_code": "UA",
+  "airline_code": "TK & LH",
+  "percent_premium": 74,
+  "award_points": 45000,
+  "travel_minutes_total": 660,
+  "products": [
+    {
+      "layover_time": 180,
+      "arrival_time": "2025-03-01T12:30:00",
+      "distance": null,
+      "airline_code": "TK",
+      "flight_number": "TK270",
+      "origin": "RMO",
+      "aircraft": "Boeing 737-800",
+      "destination": "IST",
+      "travel_minutes": 105,
+      "cabin_type": "Economy",
+      "departure_time": "2025-03-01T09:45:00",
+      "origin_city": "RMO",
+      "destination_city": "Istanbul",
+      "origin_airport": "RMO",
+      "destination_airport": "Istanbul Airport",
+      "airline_name": "Turkish Airlines"
+    },
+    {
+      "layover_time": 65,
+      "arrival_time": "2025-03-01T16:55:00",
+      "distance": 1144,
+      "airline_code": "TK",
+      "flight_number": "TK1593",
+      "origin": "IST",
+      "aircraft": "Airbus A330-300",
+      "destination": "FRA",
+      "travel_minutes": 205,
+      "cabin_type": "Business",
+      "departure_time": "2025-03-01T15:30:00",
+      "origin_city": "Istanbul",
+      "destination_city": "Frankfurt am Main",
+      "origin_airport": "Istanbul Airport",
+      "destination_airport": "Frankfurt am Main Intl",
+      "airline_name": "Turkish Airlines"
+    },
+    {
+      "layover_time": 0,
+      "arrival_time": "2025-03-01T18:45:00",
+      "distance": 407,
+      "airline_code": "LH",
+      "flight_number": "LH918",
+      "origin": "FRA",
+      "aircraft": "Airbus A320Neo",
+      "destination": "LHR",
+      "travel_minutes": 105,
+      "cabin_type": "Business",
+      "departure_time": "2025-03-01T18:00:00",
+      "origin_city": "Frankfurt am Main",
+      "destination_city": "London",
+      "origin_airport": "Frankfurt am Main Intl",
+      "destination_airport": "London Heathrow Airport",
+      "airline_name": "Lufthansa"
+    }
+  ],
+  "stops": 2,
+  "origin": "RMO",
+  "origin_city": "RMO",
+  "destination": "LHR",
+  "destination_city": "London",
+  "program_name": "United MileagePlus",
+  "cost": 686.5,
+  "risks": {
+    "long_layover": false,
+    "risky_connection": false,
+    "overnight": false
+  },
+  "url": "https://www.united.com/en/us/fsr/choose-flights?f=RMO&t=LHR&d=2025-03-01&tt=1&at=1&sc=7&px=1%2C0%2C0%2C0%2C0%2C0%2C0%2C0&taxng=1&newHP=True&clm=7&st=bestmatches&tqp=A"
+}
+```
+
+**`Flight` Object**
 
 ```typescript
 type Flight = {
@@ -202,6 +285,6 @@ type FlightProduct = {
 };
 ```
 
-### `prices` event (experimental/buggy)
+### `prices` event (experimental)
 
 The `prices` event is emitted when the retail price of a flight is updated.

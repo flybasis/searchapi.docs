@@ -16,4 +16,4 @@
   </div>
 </div>
 
-### iosdjgoisdujfoidjfodsfjsf
+**Please come back later for the Checkout API documentation.**
