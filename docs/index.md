@@ -22,19 +22,17 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
 
 ## Table of Contents
 
-- [Flybasis WebSocket API Documentation](#flybasis-websocket-api-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [Host and Route](#host-and-route)
-  - [Events](#events)
-  - [Authentication](#authentication)
-    - [Authentication Process](#authentication-process)
-  - [Input Parameters](#input-parameters)
-    - [Examples](#examples)
-      - [1- One-way search](#1--one-way-search)
-      - [2- Round-trip search](#2--round-trip-search)
-  - [Output type](#output-type)
-    - [`flights` event](#flights-event)
-    - [`prices` event (experimental)](#prices-event-experimental)
+- [Host and Route](#host-and-route)
+- [Events](#events)
+- [Authentication](#authentication)
+- [Input Parameters](#input-parameters)
+  - [Examples](#examples)
+    - [1- One-way search](#1--one-way-search)
+    - [2- Round-trip search](#2--round-trip-search)
+- [Output type](#output-type)
+  - [`flights` event](#flights-event)
+  - [`prices` event (experimental)](#prices-event-experimental)
+- [Getting started with Python](#getting-started-with-python)
 
 ## Host and Route
 
@@ -51,16 +49,24 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
 ## Authentication
 
 To ensure secure access to the Flybasis WebSocket API, all clients must authenticate before establishing a connection. Authentication is handled via a middleware that verifies the client's credentials.
+Once an authentication token is obtained, it should be as used as `auth` when creating a Websocket Client.
 
-### Authentication Process
+An example with Python's socketio client:
 
-1. **Obtain an API Key**: Users must first obtain an API key from the Flybasis developer portal. This key is unique to each user and is required for all API requests.
+```python
+import socketio
 
-2. **Connect to the WebSocket Server**: When connecting to the WebSocket server, include the API key in the connection request. This can typically be done by adding the key as a query parameter or in the headers, depending on the server configuration.
+# Initialize the Socket.IO client
+sio = socketio.Client()
 
-3. **Middleware Verification**: Upon connection, the authentication middleware will intercept the request and verify the provided API key. If the key is valid, the connection is established, and the user can begin interacting with the API.
+...
 
-4. **Error Handling**: If the API key is invalid or missing, the connection will be rejected, and an error message will be returned to the client.
+# Attempting to connect to the WebSocket server
+sio.connect('http://localhost:8000',
+            auth={'token': "YOUR_AUTH_TOKEN"},
+            retry=True,
+            socketio_path='/sockets/v1/stream-flights')
+```
 
 ## Input Parameters
 
@@ -288,3 +294,72 @@ type FlightProduct = {
 ### `prices` event (experimental)
 
 The `prices` event is emitted when the retail price of a flight is updated.
+
+## Getting started with Python
+
+The following code serves as a POC on how an end-user is expected to use our API. This is subject to modifications in the future.
+
+```python
+import socketio
+
+# Initialize the Socket.IO client
+sio = socketio.Client()
+
+# Replace with your authentication token
+auth_token = "YOUR_AUTH_TOKEN_FROM_FLYBASIS"
+
+# Define the connection event
+@sio.event
+def connect():
+    print("Connected to the server")
+
+    print('Requesting flights')
+    sio.emit('search', data={
+        "tripType": "roundtrip",
+        "origin": ["LON", "PAR"],
+        "destination": ["JFK", "LAX"],
+        "departureDate": {
+            "value": "2024-12-15",
+            "range": 0
+        },
+        "arrivalDate": {
+            "value": "2024-12-15",
+            "range": 0
+        },
+        "pax": "1",
+        "cabin": "Business",
+        "programs": [
+            "AM", "AC", "KL", "AS", "AA", "AV", "BA", "CM", "DL", "EK", "EY",
+            "B6", "QF", "SK", "SQ", "NK", "TP", "TK", "UA", "VS", "VA", "IB"
+        ],
+    })
+
+# Define the disconnection event
+@sio.event
+def disconnect():
+    print("Disconnected from the server")
+
+# Define the authentication event
+@sio.event
+def connect_error(data):
+    print("Connection failed:", data)
+
+@sio.on('error')
+def error_handler(err, _):
+    print("Error occurred", err)
+
+@sio.on('flights')
+def flights(data, _):
+    print("Recevied " + len(data['flights']) + " flights")
+
+
+# Connect to the server with custom headers
+sio.connect('http://localhost:8000',
+            auth={'token': auth_token},
+            retry=True,
+            wait_timeout=10,
+            socketio_path='/sockets/v1/stream-flights')
+
+# Wait for events
+sio.wait()
+```
