@@ -31,7 +31,6 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
     - [2- Round-trip search](#2--round-trip-search)
 - [Output type](#output-type)
   - [`flights` event](#flights-event)
-  - [`prices` event (experimental)](#prices-event-experimental)
 - [Getting started with Python](#getting-started-with-python)
 
 ## Host and Route
@@ -43,7 +42,7 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
 | Event Name | Emitted By | In-response to | Description                                                               |
 | ---------- | :--------: | :------------: | ------------------------------------------------------------------------- |
 | `search`   |   Client   |       -        | When a new search is requested using the [Parameters](#input-parameters). |
-| `flight`   |   Server   |    `search`    | When a new flight is found that matches the search parameters.            |
+| `data`     |   Server   |    `search`    | When a new flight is found that matches the search parameters.            |
 | `error`    |   Server   |       -        | When an error occurs on the server when fetching data.                    |
 
 ## Authentication
@@ -62,7 +61,7 @@ sio = socketio.Client()
 ...
 
 # Attempting to connect to the WebSocket server
-sio.connect('http://localhost:8000',
+sio.connect('API_ENDPOINT',
             auth={'token': "YOUR_AUTH_TOKEN"},
             retry=True,
             socketio_path='/sockets/v1/stream-flights')
@@ -82,10 +81,10 @@ The explanation and valid values for each parameter are provided below.
 | `tripType`                                    | string | The type of trip the user wants to search for. Can be either "oneway" or "roundtrip". | `oneway`, `roundtrip`                                                                                                              |
 | `cabin`                                       | string | The cabin class the user wants to search for.                                         | `Economy`, `Premium Economy`, `Business`, `First`                                                                                  |
 | `programs`                                    | array  | The airline programs the user wants to search for.                                    | `AM`, `AC`, `KL`, `AS`, `AA`, `AV`, `BA`, `CM`, `DL`, `EK`, `EY`, `IB`, `B6`, `QF`, `SK`, `SQ`, `NK`, `TP`, `TK`, `UA`, `VS`, `VA` |
-| `origin`                                      | array  | The origin city the user wants to search for.                                         | A list of (IATA codes for) origin cities.                                                                                          |
-| `destination`                                 | array  | The destination city the user wants to search for.                                    | A list of (IATA codes for) destination cities.                                                                                     |
+| `origin`                                      | array  | The origin city the user wants to search for. Max 3                                   | A list of (IATA codes for) origin cities.                                                                                          |
+| `destination`                                 | array  | The destination city the user wants to search for. Max 3                              | A list of (IATA codes for) destination cities.                                                                                     |
 | `departureDate`                               | object | The departure date the user wants to search for.                                      | `DateObject`, details below                                                                                                        |
-| `arrivalDate` (required only for `roundtrip`) | object | The arrival date the user wants to search for.                                        | `DateObject`, details below                                                                                                        |
+| `returnDate` (required only for `roundtrip`)  | object | The arrival date the user wants to search for.                                        | `DateObject`, details below                                                                                                        |
 
 **Date Object**
 
@@ -98,202 +97,73 @@ The explanation and valid values for each parameter are provided below.
 
 #### 1- One-way search
 
-The user wants to search for only one-way flights.
-
 ```typescript
 // One way search
-
 {
   "tripType": "oneway",
+  "origin": ['JFK'],
+  "destination": ["LHR"],
+  "departureDate": {"value": "2025-10-01", "range": 0},
+  "pax": "1",
   "cabin": "Business",
-  "programs": ["AC", "KL", "AS", "AA"],
-  "origin": ["LON", "PAR"],
-  "destination": ["JFK", "LAX"],
-  "departureDate": {
-    "value": "2024-12-15",
-    "range": 0
-  },
+  "programs": ["AM", "AC", "KL"],
 }
 ```
 
 #### 2- Round-trip search
 
-The user wants to search for round-trip flights.
-
 ```typescript
 // Two way search
-
 {
   "tripType": "roundtrip",
+  "origin": ['JFK'],
+  "destination": ["LHR"],
+  "departureDate": {"value": "2025-10-01", "range": 0},
+  "returnDate": {"value": "2025-11-04", "range": 0},
+  "pax": "1",
   "cabin": "Business",
-  "programs": ["AC", "KL", "AS", "AA"...],
-  "origin": ["LON", "PAR"],
-  "destination": ["JFK", "LAX"],
-  "departureDate": {
-    "value": "2024-12-15",
-    "range": 0
-  },
-  "arrivalDate": {
-    "value": "2024-12-15",
-    "range": 0
-  },
+  "programs": ["AM", "AC", "KL"],
 }
 ```
 
 ## Output type
 
-### `flights` event
+### `data` event
 
-From the `flights` event, the following data is returned.
-
-```typescript
-// Payload from the `flights` event
-{
-  "flights": Flight[]
-}
-```
+Sample data from the event can be previewed [here](https://). It returns an array of arrays of flights, if round trip, it returns two arrays of flights and one array of flights if one way.
 
 **Sample Flight Object (Single)**
-
-```json
-{
-  "id": "20250301_RMO_LHR_BUSINESS&ECONOMY_TK270-TK1593-LH918",
-  "date": "2025-03-01",
-  "surcharge": 56.5,
-  "distance": 0,
-  "cabin_type": "Business & Economy",
-  "airline_name": "Turkish Airlines & Lufthansa",
-  "program_code": "UA",
-  "airline_code": "TK & LH",
-  "percent_premium": 74,
-  "award_points": 45000,
-  "travel_minutes_total": 660,
-  "products": [
-    {
-      "layover_time": 180,
-      "arrival_time": "2025-03-01T12:30:00",
-      "distance": null,
-      "airline_code": "TK",
-      "flight_number": "TK270",
-      "origin": "RMO",
-      "aircraft": "Boeing 737-800",
-      "destination": "IST",
-      "travel_minutes": 105,
-      "cabin_type": "Economy",
-      "departure_time": "2025-03-01T09:45:00",
-      "origin_city": "RMO",
-      "destination_city": "Istanbul",
-      "origin_airport": "RMO",
-      "destination_airport": "Istanbul Airport",
-      "airline_name": "Turkish Airlines"
-    },
-    {
-      "layover_time": 65,
-      "arrival_time": "2025-03-01T16:55:00",
-      "distance": 1144,
-      "airline_code": "TK",
-      "flight_number": "TK1593",
-      "origin": "IST",
-      "aircraft": "Airbus A330-300",
-      "destination": "FRA",
-      "travel_minutes": 205,
-      "cabin_type": "Business",
-      "departure_time": "2025-03-01T15:30:00",
-      "origin_city": "Istanbul",
-      "destination_city": "Frankfurt am Main",
-      "origin_airport": "Istanbul Airport",
-      "destination_airport": "Frankfurt am Main Intl",
-      "airline_name": "Turkish Airlines"
-    },
-    {
-      "layover_time": 0,
-      "arrival_time": "2025-03-01T18:45:00",
-      "distance": 407,
-      "airline_code": "LH",
-      "flight_number": "LH918",
-      "origin": "FRA",
-      "aircraft": "Airbus A320Neo",
-      "destination": "LHR",
-      "travel_minutes": 105,
-      "cabin_type": "Business",
-      "departure_time": "2025-03-01T18:00:00",
-      "origin_city": "Frankfurt am Main",
-      "destination_city": "London",
-      "origin_airport": "Frankfurt am Main Intl",
-      "destination_airport": "London Heathrow Airport",
-      "airline_name": "Lufthansa"
-    }
-  ],
-  "stops": 2,
-  "origin": "RMO",
-  "origin_city": "RMO",
-  "destination": "LHR",
-  "destination_city": "London",
-  "program_name": "United MileagePlus",
-  "cost": 686.5,
-  "risks": {
-    "long_layover": false,
-    "risky_connection": false,
-    "overnight": false
-  },
-  "url": "https://www.united.com/en/us/fsr/choose-flights?f=RMO&t=LHR&d=2025-03-01&tt=1&at=1&sc=7&px=1%2C0%2C0%2C0%2C0%2C0%2C0%2C0&taxng=1&newHP=True&clm=7&st=bestmatches&tqp=A"
-}
-```
 
 **`Flight` Object**
 
 ```typescript
 type Flight = {
   id: string;
-  date: string;
-  surcharge: number;
-  distance: number;
-  cabin_type: string;
-  airline_name: string;
-  program_code: string;
-  airline_code: string;
-  percent_premium: number;
-  award_points: number;
-  travel_minutes_total: number;
-  products: FlightProduct[]; // Defined below
-  stops: number;
-  origin: string;
-  origin_city: string;
-  destination: string;
-  destination_city: string;
-  program_name: string;
-  cost: number;
-  risks: {
-    long_layover: boolean;
-    risky_connection: boolean;
-    overnight: boolean;
-  };
-  url: string | null;
+  legs: {
+    origin: string; // iata of the origin airport
+    destination: string; // iata of the destination airport
+    departure: string; // departure time in the format YYYY-MM-DDTHH:MM:SS
+    arrival: string; // arrival time in the format YYYY-MM-DDTHH:MM:SS
+    airline: string; // iata of the airline
+    flightNumber: string; // flight number without the airline code prefix
+    cabin: Cabins; // cabin class
+    duration: number; // in minutes
+    aircraft: string; // name of the aircraft
+    distance: number; // in miles
+    layover: number; // in minutes, 0 if there is no leg after the current one
+  }[];
+  surcharge: number; // amount of surcharge in USD
+  points: number;
+  program: string; // iata code of the frequent flyer program
 };
 
-type FlightProduct = {
-  layover_time: number;
-  arrival_time: string;
-  distance: number | null;
-  airline_code: string;
-  flight_number: string;
-  origin: string;
-  aircraft: string;
-  destination: string;
-  travel_minutes: number;
-  cabin_type: "Economy" | "Premium Economy" | "Business" | "First";
-  departure_time: string;
-  origin_city: string;
-  destination_city: string;
-  origin_airport: string;
-  destination_airport: string;
-  airline_name: string;
-};
+export enum Cabins {
+  Economy = "e",
+  "Premium Economy" = "p",
+  Business = "b",
+  First = "f",
+}
 ```
-
-### `prices` event (experimental)
-
-The `prices` event is emitted when the retail price of a flight is updated.
 
 ## Getting started with Python
 
@@ -301,65 +171,73 @@ The following code serves as a POC on how an end-user is expected to use our API
 
 ```python
 import socketio
+import json
 
-# Initialize the Socket.IO client
 sio = socketio.Client()
 
-# Replace with your authentication token
-auth_token = "YOUR_AUTH_TOKEN_FROM_FLYBASIS"
+ret_flights = [[], []]
 
-# Define the connection event
+
 @sio.event
 def connect():
-    print("Connected to the server")
+    print("Connected to server")
 
-    print('Requesting flights')
-    sio.emit('search', data={
-        "tripType": "roundtrip",
-        "origin": ["LON", "PAR"],
-        "destination": ["JFK", "LAX"],
-        "departureDate": {
-            "value": "2024-12-15",
-            "range": 0
-        },
-        "arrivalDate": {
-            "value": "2024-12-15",
-            "range": 0
-        },
-        "pax": "1",
-        "cabin": "Business",
-        "programs": [
-            "AM", "AC", "KL", "AS", "AA", "AV", "BA", "CM", "DL", "EK", "EY",
-            "B6", "QF", "SK", "SQ", "NK", "TP", "TK", "UA", "VS", "VA", "IB"
-        ],
-    })
 
-# Define the disconnection event
 @sio.event
-def disconnect():
-    print("Disconnected from the server")
+def disconnect(resp):
+    print("Disconnected from server")
 
-# Define the authentication event
+
 @sio.event
-def connect_error(data):
-    print("Connection failed:", data)
-
-@sio.on('error')
-def error_handler(err, _):
-    print("Error occurred", err)
-
-@sio.on('flights')
-def flights(data, _):
-    print("Recevied " + len(data['flights']) + " flights")
+def data(resp, _):
+    data = resp["data"]
+    flights = data["awd"]
+    ret_flights[0].extend(flights[0])
+    ret_flights[1].extend(flights[1])
 
 
-# Connect to the server with custom headers
-sio.connect('http://localhost:8000',
-            auth={'token': auth_token},
+@sio.event
+def error(resp, _):
+    print("Error", resp)
+
+
+def main():
+    try:
+        # Connect to the Socket.IO server
+        sio.connect(
+            url="API_ENDPOINT",
+            auth={"token": "YOUR_AUTH_TOKEN"},
             retry=True,
-            wait_timeout=10,
-            socketio_path='/sockets/v1/stream-flights')
+            socketio_path="/sockets/v1/stream-flights",
+            transports=["websocket"],
+        )
 
-# Wait for events
-sio.wait()
+        # Send a test message to the server
+        sq = {
+            "tripType": "roundtrip",
+            "origin": ['JFK'],
+            "destination": ["LHR"],
+            "departureDate": {"value": "2025-10-01", "range": 0},
+            "returnDate": {"value": "2025-11-04", "range": 0},
+            "pax": "1",
+            "cabin": "Business",
+            "programs": ["AM", "AC", "KL"],
+        }
+        sio.emit("search", sq)
+
+        sio.wait()
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        if sio.connected:
+            sio.disconnect()
+        # write to json
+        with open("flights.json", "w") as f:
+            json.dump(ret_flights, f)
+
+
+if __name__ == "__main__":
+    main()
 ```
