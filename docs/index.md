@@ -215,13 +215,13 @@ def main():
         # Send a test message to the server
         sq = {
             "tripType": "roundtrip",
-            "origin": ['JFK'],
+            "origin": ['ORD'],
             "destination": ["LHR"],
             "departureDate": {"value": "2025-10-01", "range": 0},
             "returnDate": {"value": "2025-11-04", "range": 0},
             "pax": "1",
             "cabin": "Business",
-            "programs": ["AM", "AC", "KL"],
+            "programs": ['KL', 'DL', 'EK', 'QF', 'TK', 'AC', 'AA'],
         }
         sio.emit("search", sq)
 
