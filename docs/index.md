@@ -106,7 +106,7 @@ The explanation and valid values for each parameter are provided below.
   "departureDate": {"value": "2025-10-01", "range": 0},
   "pax": "1",
   "cabin": "Business",
-  "programs": ["AM", "AC", "KL"],
+  "programs": ['KL', 'DL', 'EK', 'QF', 'TK', 'AC', 'AA'],
 }
 ```
 
@@ -116,13 +116,13 @@ The explanation and valid values for each parameter are provided below.
 // Two way search
 {
   "tripType": "roundtrip",
-  "origin": ['JFK'],
+  "origin": ['ORD'],
   "destination": ["LHR"],
   "departureDate": {"value": "2025-10-01", "range": 0},
   "returnDate": {"value": "2025-11-04", "range": 0},
   "pax": "1",
   "cabin": "Business",
-  "programs": ["AM", "AC", "KL"],
+  "programs": ['KL', 'DL', 'EK', 'QF', 'TK', 'AC', 'AA'],
 }
 ```
 
@@ -130,7 +130,7 @@ The explanation and valid values for each parameter are provided below.
 
 ### `data` event
 
-Sample data from the event can be previewed [here](https://). It returns an array of arrays of flights, if round trip, it returns two arrays of flights and one array of flights if one way.
+Sample data from the event can be previewed [here](https://flybasis.github.io/searchapi.docs/static/response.json). It returns an array of arrays of flights, if round trip, it returns two arrays of flights and one array of flights if one way.
 
 **Sample Flight Object (Single)**
 
@@ -164,6 +164,7 @@ export enum Cabins {
   First = "f",
 }
 ```
+The id on the flight is not guaranteed to be unique, it is possible to have two flights with the same id.
 
 ## Getting started with Python
 
