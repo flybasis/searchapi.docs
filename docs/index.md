@@ -155,6 +155,10 @@ type Flight = {
   surcharge: number; // amount of surcharge in USD
   points: number;
   program: string; // iata code of the frequent flyer program
+  basis: {             // bookability information about the flight
+    bookable: boolean; // indicates whether this flight is bookable via Flybasis
+    cpm: number;       // the cpm @ which the flight is bookable via Flybasis
+  }
 };
 
 export enum Cabins {
