@@ -35,7 +35,7 @@ Welcome to the Flybasis WebSocket API documentation. This API provides real-time
 
 ## Host and Route
 
-`https://api.flybasis.com/sockets/v1/stream-flights`
+`https://enterprise-api.flybasis.com/sockets/v1/stream-flights`
 
 ## Events
 
